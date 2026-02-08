@@ -127,7 +127,7 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
         <>
           <ScrollArea className="flex-1 px-4 pt-6 pb-2" ref={scrollRef as any}>
             <div className={`space-y-4 pb-4 ${isFullWidth ? "max-w-2xl" : "max-w-lg"} mx-auto`}>
-              <AnimatePresence initial={false}>
+            <AnimatePresence initial={false}>
                 {messages.map((msg) => (
                   <motion.div
                     key={msg.id}
@@ -135,7 +135,10 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
                   >
-                    <ChatMessageBubble message={msg} />
+                    <ChatMessageBubble 
+                      message={msg} 
+                      onOptionClick={(option) => !isStreaming && onSendMessage(option)}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

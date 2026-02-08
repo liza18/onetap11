@@ -31,14 +31,22 @@ const ProductCard = ({ product, inCart, onAddToCart, thumbnailUrl, onSelect }: P
 
   const showImage = thumbnailUrl && !imgError;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("a")) return;
+    
+    // Open product URL directly if available
+    if (product.productUrl) {
+      window.open(product.productUrl, "_blank", "noopener,noreferrer");
+    } else {
+      onSelect?.();
+    }
+  };
+
   return (
     <div
       className="bg-card rounded-2xl overflow-hidden group hover:shadow-elevated transition-all duration-300 cursor-pointer border border-border/50 shadow-card"
-      onClick={(e) => {
-        const target = e.target as HTMLElement;
-        if (target.closest("button") || target.closest("a")) return;
-        onSelect?.();
-      }}
+      onClick={handleCardClick}
     >
       {/* Image */}
       <div className="h-36 bg-secondary/30 flex items-center justify-center relative overflow-hidden">

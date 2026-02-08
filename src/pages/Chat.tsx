@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { ShoppingCart, Filter } from "lucide-react";
+import { ShoppingCart, Filter, Settings, Sparkles, LogOut } from "lucide-react";
 import ChatPanel from "@/components/chat/ChatPanel";
 import ProductPanel from "@/components/products/ProductPanel";
 import ProductDetailModal from "@/components/products/ProductDetailModal";
@@ -319,6 +319,32 @@ const Chat = () => {
         <div className="absolute -top-[10vw] -right-[10vw] w-[min(500px,60vw)] h-[min(500px,60vw)] rounded-full bg-primary/[0.04] blur-[120px]" />
         <div className="absolute bottom-0 -left-[5vw] w-[min(400px,50vw)] h-[min(400px,50vw)] rounded-full bg-accent/[0.03] blur-[120px]" />
       </div>
+
+      {/* Top header bar */}
+      <header className="glass-heavy flex items-center justify-between px-4 sm:px-6 h-12 shrink-0 z-20">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg gradient-hero flex items-center justify-center">
+            <Sparkles className="h-3.5 w-3.5 text-white" />
+          </div>
+          <span className="font-display font-bold text-sm tracking-tight text-foreground">OneTap</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => navigate("/settings")}
+            className="h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          <button
+            onClick={signOut}
+            className="h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
 
       {/* Mobile tab bar for switching chat/products */}
       {isMobile && hasProducts && (

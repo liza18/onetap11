@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { MessageSquare, Plus, LogOut, Clock, User, Loader2, Settings } from "lucide-react";
+import { MessageSquare, Plus, LogOut, Clock, User, Loader2, Settings, ShoppingCart } from "lucide-react";
 import ChatPanel from "@/components/chat/ChatPanel";
 import ProductPanel from "@/components/products/ProductPanel";
 import ProductDetailModal from "@/components/products/ProductDetailModal";
@@ -228,6 +228,9 @@ const Chat = () => {
   }, []);
   const handleClearCart = useCallback(() => setCart(new Set()), []);
   const cartItems = useMemo(() => products.filter(p => cart.has(p.id)), [products, cart]);
+  const handleGoToCart = useCallback(() => {
+    navigate("/cart", { state: { cartItems } });
+  }, [cartItems, navigate]);
   const similarProducts = useMemo(() => selectedProduct ? products.filter(p => p.id !== selectedProduct.id && p.category === selectedProduct.category).slice(0, 4) : [], [selectedProduct, products]);
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -262,6 +265,17 @@ const Chat = () => {
             <ProductPanel products={products} sortBy={sortBy} onSortChange={setSortBy} activeCategory={activeCategory} onCategoryChange={setActiveCategory} cart={cart} onAddToCart={handleAddToCart} isExtracting={isExtracting} onSelectProduct={setSelectedProduct} />
           </div>}
       </div>
+
+      {/* Floating Cart Button */}
+      {cartItems.length > 0 && (
+        <button
+          onClick={handleGoToCart}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-primary text-primary-foreground px-5 py-3.5 rounded-2xl shadow-elevated hover:bg-primary/90 transition-all font-semibold text-sm"
+        >
+          <ShoppingCart className="h-5 w-5" />
+          <span>Cart ({cartItems.length})</span>
+        </button>
+      )}
 
       <ProductDetailModal product={selectedProduct} similarProducts={similarProducts} onClose={() => setSelectedProduct(null)} inCart={selectedProduct ? cart.has(selectedProduct.id) : false} onAddToCart={() => selectedProduct && handleAddToCart(selectedProduct.id)} />
     </div>;

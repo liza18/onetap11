@@ -1,5 +1,6 @@
 import { Product, Retailer, ProductCategory } from "@/types/commerce";
 import type { UserSettings } from "@/types/settings";
+import { productSearchCache, searchHistory } from "./searchCache";
 
 const SEARCH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/product-search`;
 
@@ -61,16 +62,87 @@ export function stripSearchMarkers(text: string): string {
   return text.replace(/\[SEARCH:\s*.+?\]\n?/g, "").trim();
 }
 
-export async function searchProducts(
+function normalizeProducts(
+  rawProducts: RawSearchProduct[],
+  settings?: UserSettings
+): Product[] {
+  const disabledRetailers = new Set(
+    settings?.retailers
+      ?.filter((r) => !r.enabled)
+      .map((r) => r.id) ?? []
+  );
+
+  return rawProducts
+    .map((raw, index) => ({
+      id: `web-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+      name: raw.name,
+      description: raw.description || "",
+      price: typeof raw.price === "number" ? raw.price : parseFloat(String(raw.price)) || 0,
+      retailer: normalizeRetailer(raw.retailer),
+      category: normalizeCategory(raw.category),
+      deliveryEstimate: raw.deliveryEstimate || "2-3 days",
+      matchScore: Math.min(100, Math.max(0, raw.matchScore || 80)),
+      rankReason: raw.rankReason || "",
+      productUrl: raw.productUrl || undefined,
+    }))
+    .filter((p) => !disabledRetailers.has(p.retailer));
+}
+
+/**
+ * Progressive search: calls onPartialResults as cached results become available,
+ * then fetches remaining queries from the network.
+ */
+export async function searchProductsProgressive(
   queries: string[],
   userContext?: string,
-  settings?: UserSettings
+  settings?: UserSettings,
+  onPartialResults?: (products: Product[], fromCache: boolean) => void
 ): Promise<Product[]> {
   if (queries.length === 0) return [];
 
+  const limitedQueries = queries.slice(0, 4);
+  const cacheKey = limitedQueries.sort().join("|");
+
+  // Track search history
+  for (const q of limitedQueries) {
+    searchHistory.add(q);
+  }
+
+  // 1. Check cache first — instant response
+  const cached = productSearchCache.get(cacheKey);
+  if (cached) {
+    const products = normalizeProducts(cached, settings);
+    onPartialResults?.(products, true);
+    return products;
+  }
+
+  // 2. Check individual query caches for partial results
+  const cachedResults: RawSearchProduct[] = [];
+  const uncachedQueries: string[] = [];
+
+  for (const q of limitedQueries) {
+    const qCached = productSearchCache.get(q);
+    if (qCached) {
+      cachedResults.push(...qCached);
+    } else {
+      uncachedQueries.push(q);
+    }
+  }
+
+  // Emit partial cached results immediately
+  if (cachedResults.length > 0) {
+    onPartialResults?.(normalizeProducts(cachedResults, settings), true);
+  }
+
+  // 3. Fetch uncached queries from network
+  if (uncachedQueries.length === 0) {
+    const products = normalizeProducts(cachedResults, settings);
+    productSearchCache.set(cacheKey, cachedResults);
+    return products;
+  }
+
   try {
-    const limitedQueries = queries.slice(0, 4);
-    console.log("Searching with targeted queries:", limitedQueries);
+    console.log("Searching (progressive):", uncachedQueries);
 
     const resp = await fetch(SEARCH_URL, {
       method: "POST",
@@ -79,7 +151,7 @@ export async function searchProducts(
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({
-        queries: limitedQueries,
+        queries: uncachedQueries,
         userContext: userContext || "Shopping",
         country: settings?.country || "us",
         currency: settings?.currency || "USD",
@@ -88,35 +160,34 @@ export async function searchProducts(
 
     if (!resp.ok) {
       console.warn("Product search failed:", resp.status);
-      return [];
+      return normalizeProducts(cachedResults, settings);
     }
 
     const data = await resp.json();
     const rawProducts: RawSearchProduct[] = data.products || [];
 
-    // Build set of explicitly disabled retailers
-    const disabledRetailers = new Set(
-      settings?.retailers
-        ?.filter((r) => !r.enabled)
-        .map((r) => r.id) ?? []
-    );
+    // Cache individual queries and combined result
+    productSearchCache.set(cacheKey, [...cachedResults, ...rawProducts]);
+    for (const q of uncachedQueries) {
+      // Cache per-query results (approximate: store all for each)
+      productSearchCache.set(q, rawProducts);
+    }
 
-    return rawProducts
-      .map((raw, index) => ({
-        id: `web-${Date.now()}-${index}`,
-        name: raw.name,
-        description: raw.description || "",
-        price: typeof raw.price === "number" ? raw.price : parseFloat(String(raw.price)) || 0,
-        retailer: normalizeRetailer(raw.retailer),
-        category: normalizeCategory(raw.category),
-        deliveryEstimate: raw.deliveryEstimate || "2-3 days",
-        matchScore: Math.min(100, Math.max(0, raw.matchScore || 80)),
-        rankReason: raw.rankReason || "",
-        productUrl: raw.productUrl || undefined,
-      }))
-      .filter((p) => !disabledRetailers.has(p.retailer));
+    const allProducts = normalizeProducts([...cachedResults, ...rawProducts], settings);
+    onPartialResults?.(allProducts, false);
+
+    return allProducts;
   } catch (err) {
     console.error("Product search error:", err);
-    return [];
+    return normalizeProducts(cachedResults, settings);
   }
+}
+
+/** Legacy synchronous search (kept for backward compatibility) */
+export async function searchProducts(
+  queries: string[],
+  userContext?: string,
+  settings?: UserSettings
+): Promise<Product[]> {
+  return searchProductsProgressive(queries, userContext, settings);
 }

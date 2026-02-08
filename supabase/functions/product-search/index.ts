@@ -4,10 +4,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const COUNTRY_DOMAINS: Record<string, string> = {
-  us: "US stores (amazon.com, walmart.com, target.com, bestbuy.com, costco.com, etc.)",
-  mx: "Mexican stores (amazon.com.mx, mercadolibre.com.mx, liverpool.com.mx, coppel.com, elektra.com.mx, etc.)",
-  ca: "Canadian stores (amazon.ca, walmart.ca, canadiantire.ca, bestbuy.ca, costco.ca, etc.)",
+const COUNTRY_DOMAINS: Record<string, string[]> = {
+  us: ["amazon.com", "walmart.com", "target.com", "bestbuy.com"],
+  mx: ["amazon.com.mx", "mercadolibre.com.mx", "liverpool.com.mx", "coppel.com"],
+  ca: ["amazon.ca", "walmart.ca", "bestbuy.ca", "canadiantire.ca"],
 };
 
 const CURRENCY_MAP: Record<string, string> = {
@@ -16,14 +16,26 @@ const CURRENCY_MAP: Record<string, string> = {
   ca: "CAD",
 };
 
-const EXTRACT_SYSTEM_PROMPT = `Extract products from search results. For each: name, description, price, retailer, category, delivery estimate, match score (0-100), rank reason, URL.
-Rules: Only real products with price. CRITICAL: productUrl MUST be a direct link to the product page (containing /dp/, /ip/, /p/, or product ID in URL), NOT a search results page or category page. If the content includes product links, extract those. Categories: snacks/badges/tech/decorations/prizes/stationery/equipment/technology/food/home/entertainment/tools/other. Retailers: amazon/walmart/target/bestbuy/ebay/mercadolibre/other.`;
+const EXTRACT_SYSTEM_PROMPT = `You extract product data from scraped web pages. You MUST only use URLs that appear in the provided content — never invent or guess URLs.
+
+For each product found, extract:
+- name, description, price, retailer, category, delivery estimate, match score (0-100), rank reason
+- productUrl: MUST be copied exactly from the scraped content. Only use URLs you can see in the text. If no direct product URL is visible, use the page URL provided.
+
+Categories: snacks/badges/tech/decorations/prizes/stationery/equipment/technology/food/home/entertainment/tools/other.
+Retailers: amazon/walmart/target/bestbuy/ebay/mercadolibre/liverpool/coppel/other.
+
+CRITICAL RULES:
+1. NEVER fabricate or construct URLs. Only use URLs that literally appear in the provided text.
+2. If a URL in the content points to a product page, use that exact URL.
+3. If no product-specific URL exists, use the source page URL as productUrl.
+4. Only include products that have a visible price in the content.`;
 
 const extractProductsTool = {
   type: "function" as const,
   function: {
     name: "extract_products",
-    description: "Extract structured product data from web search results",
+    description: "Extract structured product data from scraped web content",
     parameters: {
       type: "object",
       properties: {
@@ -35,12 +47,12 @@ const extractProductsTool = {
               name: { type: "string", description: "Product name" },
               description: { type: "string", description: "Short product description" },
               price: { type: "number", description: "Price in the user's local currency" },
-              retailer: { type: "string", description: "Retailer name (amazon, walmart, target, bestbuy, ebay, mercadolibre, or other)" },
-              category: { type: "string", enum: ["snacks", "badges", "tech", "decorations", "prizes", "stationery", "equipment", "technology", "food", "home", "entertainment", "tools", "other"], description: "Product category" },
+              retailer: { type: "string", description: "Retailer name" },
+              category: { type: "string", enum: ["snacks", "badges", "tech", "decorations", "prizes", "stationery", "equipment", "technology", "food", "home", "entertainment", "tools", "other"] },
               deliveryEstimate: { type: "string", description: "Estimated delivery time" },
               matchScore: { type: "number", description: "How well this matches user needs, 0-100" },
               rankReason: { type: "string", description: "Why this product is recommended" },
-              productUrl: { type: "string", description: "Direct URL to the specific product page (must contain product ID like /dp/ASIN, /ip/ID, /p/SKU). Do NOT use search result pages or category pages." },
+              productUrl: { type: "string", description: "URL copied exactly from the scraped content. NEVER invent URLs." },
             },
             required: ["name", "description", "price", "retailer", "category", "deliveryEstimate", "matchScore", "rankReason", "productUrl"],
             additionalProperties: false,
@@ -52,6 +64,73 @@ const extractProductsTool = {
     },
   },
 };
+
+/**
+ * Search using Firecrawl with site-specific queries to get actual product pages.
+ */
+async function searchRetailerProducts(
+  query: string,
+  domains: string[],
+  apiKey: string
+): Promise<{ url: string; title: string; markdown: string }[]> {
+  // Do a site-specific search for each top domain + a general search
+  const searches = [
+    // Site-specific searches for top 2 retailers
+    ...domains.slice(0, 2).map((domain) => ({
+      searchQuery: `site:${domain} ${query}`,
+      limit: 3,
+    })),
+    // General product search
+    {
+      searchQuery: `${query} buy online`,
+      limit: 4,
+    },
+  ];
+
+  const results: { url: string; title: string; markdown: string }[] = [];
+
+  const promises = searches.map(async ({ searchQuery, limit }) => {
+    try {
+      const response = await fetch("https://api.firecrawl.dev/v1/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          limit,
+          scrapeOptions: {
+            formats: ["markdown", "links"],
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`Firecrawl search failed for "${searchQuery}":`, response.status);
+        return [];
+      }
+
+      const data = await response.json();
+      const items = data.data || [];
+      return items.map((item: any) => ({
+        url: item.url || "",
+        title: item.title || "",
+        markdown: item.markdown || item.description || "",
+      }));
+    } catch (err) {
+      console.error(`Search error for "${searchQuery}":`, err);
+      return [];
+    }
+  });
+
+  const allResults = await Promise.all(promises);
+  for (const batch of allResults) {
+    results.push(...batch);
+  }
+
+  return results;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -86,67 +165,41 @@ Deno.serve(async (req) => {
 
     const userCountry = country || "us";
     const userCurrency = currency || CURRENCY_MAP[userCountry] || "USD";
-    const countryStores = COUNTRY_DOMAINS[userCountry] || COUNTRY_DOMAINS["us"];
+    const domains = COUNTRY_DOMAINS[userCountry] || COUNTRY_DOMAINS["us"];
 
-    console.log(`Searching for products: country=${userCountry}, currency=${userCurrency}, queries:`, queries);
+    console.log(`Searching products: country=${userCountry}, currency=${userCurrency}, queries:`, queries);
 
-    // Search for products using Firecrawl (parallel searches)
-    const searchPromises = queries.map(async (query: string) => {
-      try {
-        // Add country-specific search context
-        const countrySearchSuffix = userCountry === "mx" ? " Mexico comprar precio" :
-                                     userCountry === "ca" ? " Canada buy price CAD" :
-                                     " buy price USD";
-        
-        const response = await fetch("https://api.firecrawl.dev/v1/search", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: `buy ${query}${countrySearchSuffix}`,
-            limit: 5,
-          }),
-        });
+    // Search across retailers for each query (limit to 3 queries)
+    const limitedQueries = queries.slice(0, 3);
+    const allSearchResults = await Promise.all(
+      limitedQueries.map((q: string) => searchRetailerProducts(q, domains, FIRECRAWL_API_KEY))
+    );
 
-        if (!response.ok) {
-          console.error(`Firecrawl search failed for "${query}":`, response.status);
-          return { query, results: [] };
-        }
+    // Build rich context with actual URLs and content for AI extraction
+    let searchContext = "";
+    for (let i = 0; i < limitedQueries.length; i++) {
+      const query = limitedQueries[i];
+      const results = allSearchResults[i];
+      searchContext += `\n### Query: "${query}"\n`;
 
-        const data = await response.json();
-        return { query, results: data.data || [] };
-      } catch (err) {
-        console.error(`Search error for "${query}":`, err);
-        return { query, results: [] };
-      }
-    });
-
-    const searchResults = await Promise.all(searchPromises);
-
-    // Compile search results into a text block for AI extraction
-    let searchContext = "## Web Search Results for Product Research\n\n";
-    for (const { query, results } of searchResults) {
-      searchContext += `### Search: "${query}"\n`;
       if (results.length === 0) {
-        searchContext += "No results found.\n\n";
+        searchContext += "No results found.\n";
         continue;
       }
+
       for (const result of results) {
-        searchContext += `- **${result.title || "Untitled"}**\n`;
-        searchContext += `  URL: ${result.url || "N/A"}\n`;
-        searchContext += `  ${result.description || ""}\n`;
-        if (result.markdown) {
-          searchContext += `  Content: ${result.markdown.slice(0, 500)}\n`;
-        }
-        searchContext += "\n";
+        searchContext += `\n**Page:** ${result.title}\n`;
+        searchContext += `**Source URL:** ${result.url}\n`;
+        // Include up to 2000 chars of markdown to capture product links and prices
+        const content = result.markdown.slice(0, 2000);
+        searchContext += `**Content:**\n${content}\n`;
+        searchContext += "---\n";
       }
     }
 
-    console.log("Search context compiled, extracting products with AI...");
+    console.log(`Search context: ${searchContext.length} chars from ${allSearchResults.flat().length} pages`);
 
-    // Use AI to extract structured product data from search results
+    // Use AI to extract structured products — emphasizing to use only real URLs from content
     const aiResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -161,7 +214,7 @@ Deno.serve(async (req) => {
             { role: "system", content: EXTRACT_SYSTEM_PROMPT },
             {
               role: "user",
-              content: `User is shopping from: ${countryStores}\nCurrency: ${userCurrency}\nUser context: ${userContext || "Shopping"}\n\n${searchContext}\n\nExtract all real products with their DIRECT product page URLs (containing product IDs like /dp/, /ip/, /p/), prices in ${userCurrency}, and details. Prefer products from ${countryStores}. Only include products you can verify from the search results. IMPORTANT: URLs must go directly to the product page, not search results or category pages.`,
+              content: `Shopping context: ${userContext || "General shopping"}\nCurrency: ${userCurrency}\nPreferred stores: ${domains.join(", ")}\n\n## Scraped Web Content\n${searchContext}\n\nExtract real products with prices in ${userCurrency}. For productUrl, you MUST use a URL that appears verbatim in the content above. DO NOT invent or modify URLs. If a product page URL exists in the content (e.g. containing /dp/, /ip/, /p/, or a product slug), use it. Otherwise use the Source URL of the page where you found the product.`,
             },
           ],
           tools: [extractProductsTool],
@@ -204,7 +257,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Extracted ${products.length} real products`);
+    // Validate URLs — remove products with obviously fake/constructed URLs
+    const allSourceUrls = allSearchResults.flat().map((r) => r.url);
+    products = products.filter((p: any) => {
+      if (!p.productUrl) return false;
+      try {
+        const url = new URL(p.productUrl);
+        // Must be http(s)
+        if (!url.protocol.startsWith("http")) return false;
+        // Check if URL domain matches any known retailer or source
+        const domain = url.hostname.replace("www.", "");
+        const isKnownDomain = domains.some((d) => domain.includes(d.replace("www.", ""))) ||
+          allSourceUrls.some((src) => {
+            try { return new URL(src).hostname.replace("www.", "") === domain; } catch { return false; }
+          });
+        return isKnownDomain;
+      } catch {
+        return false;
+      }
+    });
+
+    console.log(`Extracted ${products.length} validated products`);
 
     return new Response(
       JSON.stringify({ products }),

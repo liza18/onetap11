@@ -1,6 +1,6 @@
 # OneTap — Agentic Commerce Prototype ⚡
 
-🔗 **Live Demo:** https://onetap11.lovable.app/
+🔗 **Live Demo:** https://onetap11.lovable.app/auth
 
 OneTap is an AI-powered shopping agent that lets users delegate entire purchases using natural language.
 Instead of browsing products across multiple websites, users describe an outcome — and the agent handles planning, sourcing, ranking, and checkout orchestration.
@@ -28,11 +28,11 @@ This is not a recommendation chatbot — it is a purchasing agent.
 
 ## ✨ Core Features
 
-- Conversational intent capture
-- Multi-retailer product discovery
-- Explainable ranking logic
-- Unified cross-store cart
-- Simulated one-time checkout
+- Conversational intent capture  
+- Multi-retailer product discovery  
+- Explainable ranking logic  
+- Unified cross-store cart  
+- Simulated one-time checkout  
 
 ---
 
@@ -42,7 +42,7 @@ This is not a recommendation chatbot — it is a purchasing agent.
 - **ChatGPT** — planning and reasoning  
 - **Firecrawl** — product discovery  
 - **React + TypeScript + Vite**  
-- **shadcn/ui** — UI  
+- **shadcn/ui + Tailwind CSS** — UI  
 - **Figma** — design  
 - **GitHub** — version control  
 - **ElevenLabs** — voice demos  
@@ -54,3 +54,35 @@ This is not a recommendation chatbot — it is a purchasing agent.
 Hackathon prototype.  
 All purchases are simulated.
 
+---
+
+## How can I edit this code?
+
+There are several ways of editing the application.
+
+### Use Lovable
+
+Visit the Lovable project and start prompting:  
+https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+
+Changes made via Lovable are committed automatically to this repository.
+
+### Use your preferred IDE
+
+You can work locally and push changes to GitHub. Pushed changes will also be reflected in Lovable.
+
+**Requirements:** Node.js & npm  
+Install with nvm: https://github.com/nvm-sh/nvm#installing-and-updating
+
+```sh
+# Clone the repository
+git clone <YOUR_GIT_URL>
+
+# Navigate to the project directory
+cd <YOUR_PROJECT_NAME>
+
+# Install dependencies
+npm i
+
+# Start the development server
+npm run dev

@@ -11,6 +11,8 @@ import { lazy, Suspense } from "react";
 const Chat = lazy(() => import("./pages/Chat"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
 const OrderComplete = lazy(() => import("./pages/OrderComplete"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -43,6 +45,8 @@ const App = () => (
                 <Route path="/" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/chat" element={<Navigate to="/" replace />} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                 <Route path="/order-complete" element={<ProtectedRoute><OrderComplete /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

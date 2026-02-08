@@ -59,17 +59,6 @@ const OrderComplete = () => {
             matchScore: 88,
             description: "",
           },
-          {
-            id: "demo4",
-            name: "Bluetooth Party Speaker",
-            price: 79.99,
-            regularPrice: 129.99,
-            retailer: "bestbuy" as Retailer,
-            category: "technology",
-            deliveryEstimate: "3 days",
-            matchScore: 90,
-            description: "",
-          },
         ];
 
   const totalOurPrice = orderItems.reduce((s, i) => s + i.price, 0);
@@ -95,16 +84,7 @@ const OrderComplete = () => {
 
       <ScrollArea className="flex-1">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pb-20 relative z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/chat")}
-            className="mb-6 text-xs gap-1.5 text-muted-foreground rounded-xl"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to chat
-          </Button>
-
+          {/* Success Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -131,6 +111,7 @@ const OrderComplete = () => {
             </p>
           </motion.div>
 
+          {/* Savings Banner */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -152,11 +133,12 @@ const OrderComplete = () => {
             </div>
           </motion.div>
 
+          {/* Order Summary */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="glass-card rounded-2xl overflow-hidden"
+            className="glass-card rounded-2xl overflow-hidden mb-8"
           >
             <div className="px-6 pt-5 pb-4">
               <h2 className="font-display text-xl font-bold tracking-tight">
@@ -208,37 +190,42 @@ const OrderComplete = () => {
                 );
               })}
             </div>
+          </motion.div>
 
-            <div className="border-t border-border/40 px-6 py-4 space-y-2 bg-secondary/20">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">{cs}{totalOurPrice.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium text-success">Free</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax</span>
-                <span className="font-medium">{cs}{(totalOurPrice * 0.08).toFixed(2)}</span>
-              </div>
-              <div className="h-px bg-border/40 my-1" />
-              <div className="flex justify-between">
-                <span className="font-display font-bold">Total</span>
-                <span className="font-display font-bold text-lg">{cs}{(totalOurPrice * 1.08).toFixed(2)}</span>
-              </div>
+          {/* What's Next */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            className="glass-card rounded-2xl p-6 mb-8"
+          >
+            <h2 className="font-display text-xl font-bold tracking-tight mb-5">What's Next?</h2>
+            <div className="space-y-4">
+              {[
+                "You'll receive confirmation emails from each retailer",
+                "Track your packages using the links in your confirmation emails",
+                "Items will arrive according to each retailer's delivery schedule",
+              ].map((step, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-primary">{i + 1}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
 
+          {/* CTA */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-8 text-center"
+            transition={{ delay: 0.8 }}
+            className="text-center"
           >
             <Button
-              onClick={() => navigate("/chat")}
-              className="rounded-2xl px-8 h-12 text-sm font-semibold"
+              onClick={() => navigate("/")}
+              className="rounded-2xl px-8 h-12 text-sm font-semibold bg-gradient-to-r from-primary to-primary/80"
             >
               Start New Shopping Session
             </Button>

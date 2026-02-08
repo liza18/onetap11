@@ -58,28 +58,28 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
     <div className="flex flex-col h-full">
       {isInitial && isFullWidth ? (
         /* ChatGPT-style centered initial view */
-        <div className="flex-1 flex flex-col items-center justify-center px-4 pb-8">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 pb-6 sm:pb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-            className="text-center max-w-xl mx-auto w-full"
+            className="text-center w-full max-w-xl mx-auto"
           >
-            <div className="inline-flex items-center gap-2 mb-6">
-              <div className="w-12 h-12 rounded-[16px] gradient-hero flex items-center justify-center shadow-elevated">
-                <Sparkles className="h-6 w-6 text-white" />
+            <div className="inline-flex items-center gap-2 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[16px] gradient-hero flex items-center justify-center shadow-elevated">
+                <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-3 text-foreground">
+            <h1 className="font-display font-bold tracking-tight mb-2 sm:mb-3 text-foreground">
               What do you need?
             </h1>
-            <p className="text-muted-foreground text-sm sm:text-base mb-8 max-w-md mx-auto leading-relaxed">
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed px-2">
               Describe what you're looking for. I'll search across retailers, compare options, and build your cart.
             </p>
 
             {/* Central input */}
-            <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto mb-6">
-              <div className="bg-card rounded-2xl px-4 py-3 flex items-end gap-3 shadow-card border border-border/60 transition-shadow focus-within:shadow-elevated focus-within:border-primary/20">
+            <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto mb-4 sm:mb-6 px-1">
+              <div className="bg-card rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 flex items-end gap-2 sm:gap-3 shadow-card border border-border/60 transition-shadow focus-within:shadow-elevated focus-within:border-primary/20">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -94,7 +94,7 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
                   type="submit"
                   size="icon"
                   disabled={!input.trim() || isStreaming}
-                  className="rounded-xl h-9 w-9 shrink-0 mb-0.5 shadow-sm"
+                  className="rounded-xl h-8 w-8 sm:h-9 sm:w-9 shrink-0 mb-0.5 shadow-sm"
                 >
                   {isStreaming ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -106,13 +106,13 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
             </form>
 
             {/* Quick prompts */}
-            <div className="flex flex-col gap-2 max-w-lg mx-auto">
+            <div className="flex flex-col gap-2 max-w-lg mx-auto px-1">
               {quickPrompts.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => onSendMessage(prompt)}
                   disabled={isStreaming}
-                  className="text-left text-[13px] leading-snug px-4 py-3 rounded-2xl border border-border/50 bg-card/80 hover:bg-secondary/50 hover:border-primary/20 text-muted-foreground hover:text-foreground transition-all duration-200 disabled:opacity-50"
+                  className="text-left text-xs sm:text-[13px] leading-snug px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-border/50 bg-card/80 hover:bg-secondary/50 hover:border-primary/20 text-muted-foreground hover:text-foreground transition-all duration-200 disabled:opacity-50"
                 >
                   {prompt}
                 </button>
@@ -125,8 +125,8 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
         </div>
       ) : (
         <>
-          <ScrollArea className="flex-1 px-4 pt-6 pb-2" ref={scrollRef as any}>
-            <div className={`space-y-4 pb-4 ${isFullWidth ? "max-w-2xl" : "max-w-lg"} mx-auto`}>
+          <ScrollArea className="flex-1 px-3 sm:px-4 pt-4 sm:pt-6 pb-2" ref={scrollRef as any}>
+            <div className={`space-y-3 sm:space-y-4 pb-4 ${isFullWidth ? "max-w-2xl" : "max-w-lg"} mx-auto`}>
             <AnimatePresence initial={false}>
                 {messages.map((msg) => (
                   <motion.div
@@ -160,9 +160,9 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
             </div>
           </ScrollArea>
 
-          <form onSubmit={handleSubmit} className="px-3 pb-4 pt-2">
+          <form onSubmit={handleSubmit} className="px-2 sm:px-3 pb-3 sm:pb-4 pt-2 safe-bottom">
             <div className={`${isFullWidth ? "max-w-2xl" : "max-w-lg"} mx-auto`}>
-              <div className="bg-card rounded-2xl px-4 py-2.5 flex items-end gap-2.5 shadow-card border border-border/60 transition-shadow focus-within:shadow-elevated focus-within:border-primary/20">
+              <div className="bg-card rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 flex items-end gap-2 sm:gap-2.5 shadow-card border border-border/60 transition-shadow focus-within:shadow-elevated focus-within:border-primary/20">
                 <textarea
                   ref={inputRef}
                   value={input}

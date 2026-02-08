@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -6,11 +6,9 @@ import {
   TrendingUp,
   Filter,
   Loader2,
-  Tag,
   Zap,
   ChevronDown,
   ChevronRight,
-  X,
 } from "lucide-react";
 import { ProductCategory, CATEGORY_LABELS, SortOption } from "@/types/commerce";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,9 +55,9 @@ const SearchSidebar = ({
   const [suggestionsOpen, setSuggestionsOpen] = useState(true);
 
   return (
-    <div className="w-[260px] min-w-[260px] h-full bg-card/80 backdrop-blur-sm border-r border-border/40 flex flex-col overflow-hidden">
+    <div className="w-full h-full bg-card/80 backdrop-blur-sm border-r border-border/40 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="px-4 pt-5 pb-3 border-b border-border/30 shrink-0">
+      <div className="px-3 sm:px-4 pt-4 sm:pt-5 pb-2 sm:pb-3 border-b border-border/30 shrink-0">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
             <Search className="h-3.5 w-3.5 text-primary" />
@@ -82,7 +80,7 @@ const SearchSidebar = ({
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-1">
+        <div className="p-2 sm:p-3 space-y-1">
           {/* Search Status */}
           <AnimatePresence>
             {isSearching && (
@@ -98,9 +96,7 @@ const SearchSidebar = ({
                     <span className="text-xs font-medium text-primary">Intelligent Search Active</span>
                   </div>
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-1.5 flex-1 rounded-full" />
-                    </div>
+                    <Skeleton className="h-1.5 w-full rounded-full" />
                     <p className="text-[10px] text-muted-foreground">
                       Crawling retailers • Extracting products • Ranking with A*
                     </p>
@@ -131,7 +127,7 @@ const SearchSidebar = ({
             onToggle={() => setFiltersOpen(!filtersOpen)}
           >
             {/* Sort */}
-            <div className="space-y-1.5 mb-3">
+            <div className="space-y-1 mb-3">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Sort by</p>
               {SORT_OPTIONS.map((opt) => (
                 <button
@@ -150,7 +146,7 @@ const SearchSidebar = ({
             </div>
 
             {/* Categories */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Category</p>
               {availableCategories.map((cat) => (
                 <button
@@ -218,7 +214,7 @@ const SearchSidebar = ({
       </ScrollArea>
 
       {/* Footer Performance */}
-      <div className="px-4 py-2.5 border-t border-border/30 shrink-0">
+      <div className="px-3 sm:px-4 py-2 border-t border-border/30 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Algorithm</span>
           <span className="text-[9px] text-muted-foreground">A* + QuickSort</span>

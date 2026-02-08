@@ -55,11 +55,11 @@ const ProductDetailModal = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
-            <div className="w-[95vw] sm:w-[90vw] max-w-[800px] max-h-[90vh] bg-card rounded-3xl shadow-elevated border border-border/60 overflow-hidden flex flex-col pb-[env(safe-area-inset-bottom)]">
+            <div className="w-full sm:w-[90vw] sm:max-w-[800px] max-h-[95dvh] sm:max-h-[90vh] bg-card rounded-t-3xl sm:rounded-3xl shadow-elevated border border-border/60 overflow-hidden flex flex-col safe-bottom">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-2 sm:pb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div
                   className="px-2.5 py-1 rounded-xl text-[10px] font-semibold text-white"
@@ -80,67 +80,67 @@ const ProductDetailModal = ({
             </div>
 
             <ScrollArea className="flex-1">
-              <div className="px-6 pb-6 space-y-6">
-                <div className="space-y-3">
-                  <h2 className="font-display font-bold text-xl tracking-tight leading-snug">
+              <div className="px-4 sm:px-6 pb-6 space-y-4 sm:space-y-6">
+                <div className="space-y-2 sm:space-y-3">
+                  <h2 className="font-display font-bold text-lg sm:text-xl tracking-tight leading-snug">
                     {product.name}
                   </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                     {product.description}
                   </p>
                 </div>
 
                 {/* Key stats */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-secondary/40 rounded-2xl p-3 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Price</p>
-                    <p className="font-display font-bold text-lg tracking-tight">{currencySymbol}{product.price.toFixed(2)}</p>
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="bg-secondary/40 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Price</p>
+                    <p className="font-display font-bold text-base sm:text-lg tracking-tight">{currencySymbol}{product.price.toFixed(2)}</p>
                   </div>
-                  <div className="bg-secondary/40 rounded-2xl p-3 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Delivery</p>
-                    <p className="flex items-center justify-center gap-1 text-sm font-medium">
-                      <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="bg-secondary/40 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Delivery</p>
+                    <p className="flex items-center justify-center gap-1 text-xs sm:text-sm font-medium">
+                      <Truck className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
                       {product.deliveryEstimate}
                     </p>
                   </div>
-                  <div className="bg-secondary/40 rounded-2xl p-3 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Match</p>
-                    <p className={`flex items-center justify-center gap-1 text-sm font-bold ${scoreColor}`}>
-                      <Star className="h-3.5 w-3.5" />
+                  <div className="bg-secondary/40 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Match</p>
+                    <p className={`flex items-center justify-center gap-1 text-xs sm:text-sm font-bold ${scoreColor}`}>
+                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                       {product.matchScore}%
                     </p>
                   </div>
                 </div>
 
                 {/* AI Explanation */}
-                <div className="bg-primary/[0.04] border border-primary/10 rounded-2xl p-5 space-y-3">
+                <div className="bg-primary/[0.04] border border-primary/10 rounded-2xl p-4 sm:p-5 space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl gradient-hero flex items-center justify-center">
-                      <Sparkles className="h-3.5 w-3.5 text-white" />
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl gradient-hero flex items-center justify-center">
+                      <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-white" />
                     </div>
-                    <h3 className="font-display font-semibold text-sm tracking-tight">AI Analysis</h3>
+                    <h3 className="font-display font-semibold text-xs sm:text-sm tracking-tight">AI Analysis</h3>
                   </div>
-                  <p className="text-[13px] text-foreground/75 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] text-foreground/75 leading-relaxed">
                     {aiExplanation}
                   </p>
                 </div>
 
                 {/* Comparison chart */}
                 {allForComparison.length > 1 && (
-                  <div className="bg-secondary/30 rounded-2xl p-5 space-y-3">
+                  <div className="bg-secondary/30 rounded-2xl p-4 sm:p-5 space-y-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
                       </div>
-                      <h3 className="font-display font-semibold text-sm tracking-tight">Comparison</h3>
+                      <h3 className="font-display font-semibold text-xs sm:text-sm tracking-tight">Comparison</h3>
                     </div>
                     <ComparisonChart products={allForComparison} highlightId={product.id} />
                   </div>
                 )}
 
                 {product.rankReason && (
-                  <div className="bg-secondary/30 rounded-2xl p-4">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  <div className="bg-secondary/30 rounded-2xl p-3 sm:p-4">
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
                       <span className="font-semibold text-foreground/80">Ranking reason:</span> {product.rankReason}
                     </p>
                   </div>
@@ -149,11 +149,11 @@ const ProductDetailModal = ({
             </ScrollArea>
 
             {/* Actions */}
-            <div className="bg-card border-t border-border/40 px-6 py-4 flex items-center gap-3 shrink-0">
+            <div className="bg-card border-t border-border/40 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-3 shrink-0">
               <Button
                 onClick={onAddToCart}
                 variant={inCart ? "secondary" : "default"}
-                className="flex-1 rounded-xl h-11 font-medium"
+                className="flex-1 rounded-xl h-10 sm:h-11 font-medium text-xs sm:text-sm"
               >
                 {inCart ? (
                   <>
@@ -170,12 +170,13 @@ const ProductDetailModal = ({
               {product.productUrl && (
                 <Button
                   variant="ghost"
-                  className="rounded-xl h-11 gap-2 text-muted-foreground hover:text-foreground"
+                  className="rounded-xl h-10 sm:h-11 gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground text-xs sm:text-sm"
                   asChild
                 >
                   <a href={product.productUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" />
-                    View on {retailer.label}
+                    <span className="hidden sm:inline">View on {retailer.label}</span>
+                    <span className="sm:hidden">View</span>
                   </a>
                 </Button>
               )}

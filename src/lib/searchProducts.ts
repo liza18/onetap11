@@ -64,7 +64,8 @@ export function stripSearchMarkers(text: string): string {
 
 function normalizeProducts(
   rawProducts: RawSearchProduct[],
-  settings?: UserSettings
+  settings?: UserSettings,
+  searchGroup?: string
 ): Product[] {
   const disabledRetailers = new Set(
     settings?.retailers
@@ -84,6 +85,7 @@ function normalizeProducts(
       matchScore: Math.min(100, Math.max(0, raw.matchScore || 80)),
       rankReason: raw.rankReason || "",
       productUrl: raw.productUrl || undefined,
+      searchGroup: searchGroup || undefined,
     }))
     .filter((p) => !disabledRetailers.has(p.retailer));
 }
@@ -91,6 +93,7 @@ function normalizeProducts(
 /**
  * Progressive search: calls onPartialResults as cached results become available,
  * then fetches remaining queries from the network.
+ * Each query tags its products with a searchGroup for grouped navigation.
  */
 export async function searchProductsProgressive(
   queries: string[],
@@ -100,86 +103,89 @@ export async function searchProductsProgressive(
 ): Promise<Product[]> {
   if (queries.length === 0) return [];
 
-  const limitedQueries = queries.slice(0, 4);
-  const cacheKey = limitedQueries.sort().join("|");
+  const limitedQueries = queries.slice(0, 6);
 
   // Track search history
   for (const q of limitedQueries) {
     searchHistory.add(q);
   }
 
-  // 1. Check cache first — instant response
-  const cached = productSearchCache.get(cacheKey);
-  if (cached) {
-    const products = normalizeProducts(cached, settings);
-    onPartialResults?.(products, true);
-    return products;
-  }
-
-  // 2. Check individual query caches for partial results
-  const cachedResults: RawSearchProduct[] = [];
+  // 1. Check individual query caches for partial results
+  const cachedProducts: Product[] = [];
   const uncachedQueries: string[] = [];
 
   for (const q of limitedQueries) {
     const qCached = productSearchCache.get(q);
     if (qCached) {
-      cachedResults.push(...qCached);
+      cachedProducts.push(...normalizeProducts(qCached, settings, q));
     } else {
       uncachedQueries.push(q);
     }
   }
 
   // Emit partial cached results immediately
-  if (cachedResults.length > 0) {
-    onPartialResults?.(normalizeProducts(cachedResults, settings), true);
+  if (cachedProducts.length > 0) {
+    onPartialResults?.(cachedProducts, true);
   }
 
-  // 3. Fetch uncached queries from network
+  // 2. If everything cached, return early
   if (uncachedQueries.length === 0) {
-    const products = normalizeProducts(cachedResults, settings);
-    productSearchCache.set(cacheKey, cachedResults);
-    return products;
+    return cachedProducts;
   }
 
+  // 3. Fetch uncached queries from network — fetch each query separately to tag groups
   try {
     console.log("Searching (progressive):", uncachedQueries);
 
-    const resp = await fetch(SEARCH_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({
-        queries: uncachedQueries,
-        userContext: userContext || "Shopping",
-        country: settings?.country || "us",
-        currency: settings?.currency || "USD",
-      }),
+    const fetchPromises = uncachedQueries.map(async (query) => {
+      try {
+        const resp = await fetch(SEARCH_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            queries: [query],
+            userContext: userContext || "Shopping",
+            country: settings?.country || "us",
+            currency: settings?.currency || "USD",
+          }),
+        });
+
+        if (!resp.ok) {
+          console.warn(`Product search failed for "${query}":`, resp.status);
+          return [];
+        }
+
+        const data = await resp.json();
+        const rawProducts: RawSearchProduct[] = data.products || [];
+
+        // Cache per-query
+        productSearchCache.set(query, rawProducts);
+
+        // Tag with searchGroup
+        const products = normalizeProducts(rawProducts, settings, query);
+
+        // Emit incrementally
+        if (products.length > 0) {
+          onPartialResults?.(products, false);
+        }
+
+        return products;
+      } catch (err) {
+        console.error(`Search error for "${query}":`, err);
+        return [];
+      }
     });
 
-    if (!resp.ok) {
-      console.warn("Product search failed:", resp.status);
-      return normalizeProducts(cachedResults, settings);
-    }
+    const allNetworkResults = await Promise.all(fetchPromises);
+    const networkProducts = allNetworkResults.flat();
 
-    const data = await resp.json();
-    const rawProducts: RawSearchProduct[] = data.products || [];
-
-    // Cache individual queries and combined result
-    productSearchCache.set(cacheKey, [...cachedResults, ...rawProducts]);
-    for (const q of uncachedQueries) {
-      // Cache per-query results (approximate: store all for each)
-      productSearchCache.set(q, rawProducts);
-    }
-
-    const allProducts = normalizeProducts([...cachedResults, ...rawProducts], settings);
-    onPartialResults?.(allProducts, false);
-
-    return allProducts;
+    return [...cachedProducts, ...networkProducts];
   } catch (err) {
     console.error("Product search error:", err);
-    return normalizeProducts(cachedResults, settings);
+    return cachedProducts;
   }
 }
 

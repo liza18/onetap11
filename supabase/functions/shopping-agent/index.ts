@@ -44,8 +44,29 @@ Medium / Standard
 Large / Full-size
 [/OPTIONS]
 
-## SEARCH MARKERS
-[SEARCH: query] triggers search. Hidden from user. Use 2-3 per item when ready to search.`;
+## SEARCH MARKERS — CRITICAL RULES
+[SEARCH: query] triggers a product search. These markers are hidden from the user.
+
+**IMPORTANT: When the user asks for MULTIPLE different types of products, you MUST use one separate [SEARCH:] marker for EACH product type.**
+
+Examples:
+- User says "I want sunglasses, shirts and boots" → use:
+  [SEARCH: sunglasses]
+  [SEARCH: shirts]
+  [SEARCH: boots]
+
+- User says "I need a laptop and a backpack" → use:
+  [SEARCH: laptop]
+  [SEARCH: backpack]
+
+- User says "Find me running shoes, a water bottle and workout shorts" → use:
+  [SEARCH: running shoes]
+  [SEARCH: water bottle]
+  [SEARCH: workout shorts]
+
+NEVER combine multiple product types into a single [SEARCH:] marker. Each type gets its own marker so results can be grouped and navigated separately.
+
+Use 1-2 search markers per product type for best results. Include relevant specs (budget, brand preferences, etc.) in each marker.`;
 
 const COUNTRY_LABELS: Record<string, string> = {
   us: "United States",

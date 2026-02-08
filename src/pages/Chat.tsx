@@ -53,6 +53,10 @@ const Chat = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Multi-group step navigation state
+  const [searchGroups, setSearchGroups] = useState<string[]>([]);
+  const [currentGroupStep, setCurrentGroupStep] = useState(0);
+
   const hasProducts = products.length > 0;
   const recentCacheQueries = useMemo(() => productSearchCache.getRecentQueries(5), [products]);
   const availableCategories: (ProductCategory | "all")[] = useMemo(() => {
@@ -108,6 +112,8 @@ const Chat = () => {
     setConversationId(null);
     setProducts([]);
     setActiveCategory("all");
+    setSearchGroups([]);
+    setCurrentGroupStep(0);
   };
 
   const handleSendMessage = useCallback(
@@ -186,6 +192,19 @@ const Chat = () => {
 
           if (searchQueries.length > 0) {
             setIsExtracting(true);
+
+            // Set up search groups for step navigation
+            if (searchQueries.length > 1) {
+              setSearchGroups(searchQueries);
+              setCurrentGroupStep(0);
+            } else {
+              setSearchGroups([]);
+              setCurrentGroupStep(0);
+            }
+
+            // Clear previous products for new search session
+            setProducts([]);
+
             const userContext =
               messages
                 .filter((m) => m.role === "user")
@@ -207,9 +226,14 @@ const Chat = () => {
                       const newProducts = partialProducts.filter(
                         (p) => !existingNames.has(p.name.toLowerCase())
                       );
-                      return [...newProducts, ...prev];
+                      return [...prev, ...newProducts];
                     });
                     setActiveCategory("all");
+
+                    // Auto-switch to products tab on mobile
+                    if (isMobile) {
+                      setShowMobileProducts(true);
+                    }
 
                     if (fromCache) {
                       console.log("⚡ Cache hit — instant results");
@@ -234,7 +258,7 @@ const Chat = () => {
         },
       });
     },
-    [messages, isStreaming, conversationId, settings]
+    [messages, isStreaming, conversationId, settings, isMobile]
   );
 
   const handleAddToCart = useCallback((productId: string) => {
@@ -363,13 +387,17 @@ const Chat = () => {
               onAddToCart={handleAddToCart}
               isExtracting={isExtracting}
               onSelectProduct={setSelectedProduct}
+              searchGroups={searchGroups}
+              currentGroupStep={currentGroupStep}
+              onGroupStepChange={setCurrentGroupStep}
+              onGoToCheckout={handleGoToCart}
             />
           </div>
         )}
       </div>
 
-      {/* Floating Cart Button */}
-      {cartItems.length > 0 && (
+      {/* Floating Cart Button — only show when NOT using multi-group step nav */}
+      {cartItems.length > 0 && searchGroups.length <= 1 && (
         <button
           onClick={handleGoToCart}
           className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,1.5rem))] right-4 sm:right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 sm:px-5 py-3 rounded-2xl shadow-elevated hover:bg-primary/90 transition-all font-semibold text-sm"

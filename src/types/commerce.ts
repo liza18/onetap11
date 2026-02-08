@@ -12,6 +12,7 @@ export interface Product {
   imageUrl?: string;
   rankReason?: string;
   productUrl?: string;
+  searchGroup?: string; // The search query that produced this product
 }
 
 export type ProductCategory =

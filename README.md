@@ -1,62 +1,56 @@
-# Welcome to your Lovable project
+# OneTap — Agentic Commerce Prototype ⚡
 
-## Project info
+🔗 **Live Demo:** https://onetap11.lovable.app/
 
-**URL**: https://onetap11.lovable.app/auth
+OneTap is an AI-powered shopping agent that lets users delegate entire purchases using natural language.
+Instead of browsing products across multiple websites, users describe an outcome — and the agent handles planning, sourcing, ranking, and checkout orchestration.
 
-## How can I edit this code?
+This project explores the future of **agentic commerce**, where shopping is driven by intent, not clicks.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🚀 What It Does
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+**The problem**  
+Online shopping is fragmented and inefficient. Multi-item purchases require users to compare options across sites, manage delivery constraints, and repeat checkout steps.
 
-Changes made via Lovable will be committed automatically to this repo.
+**The solution**  
+OneTap enables end-to-end shopping delegation:
+- Users describe what they want (budget, deadline, preferences)
+- The agent breaks intent into concrete needs
+- Products are sourced across multiple retailers
+- Options are ranked transparently
+- Items are combined into a single unified cart with a simulated checkout
 
-**Use your preferred IDE**
+This is not a recommendation chatbot — it is a purchasing agent.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## ✨ Core Features
 
-Follow these steps:
+- Conversational intent capture
+- Multi-retailer product discovery
+- Explainable ranking logic
+- Unified cross-store cart
+- Simulated one-time checkout
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🛠️ Tech Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Lovable** — agent orchestration  
+- **ChatGPT** — planning and reasoning  
+- **Firecrawl** — product discovery  
+- **React + TypeScript + Vite**  
+- **shadcn/ui** — UI  
+- **Figma** — design  
+- **GitHub** — version control  
+- **ElevenLabs** — voice demos  
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## 🧪 Status
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Hackathon prototype.  
+All purchases are simulated.
 

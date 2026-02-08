@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, Loader2, Sparkles } from "lucide-react";
+import { ArrowUp, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import FeaturePills from "@/components/home/FeaturePills";
 import { ChatMessage } from "@/types/commerce";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessageBubble from "./ChatMessageBubble";
+import onetapLogo from "@/assets/onetap-logo.png";
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -65,11 +66,12 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
             transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
             className="text-center w-full max-w-xl mx-auto"
           >
-            <div className="inline-flex items-center gap-3 mb-3 sm:mb-5">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[16px] gradient-hero flex items-center justify-center shadow-elevated">
-                <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <span className="font-display font-bold text-xl sm:text-2xl tracking-tight text-foreground">OneTap</span>
+            <div className="mb-5 sm:mb-7">
+              <img
+                src={onetapLogo}
+                alt="OneTap logo"
+                className="w-28 h-28 sm:w-36 sm:h-36 mx-auto object-contain drop-shadow-lg"
+              />
             </div>
             <h1 className="font-display font-bold tracking-tight mb-2 sm:mb-3 text-foreground">
               What do you need?

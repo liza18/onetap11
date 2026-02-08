@@ -4,7 +4,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const BASE_SYSTEM_PROMPT = `You are **AgentCart**, a brief and direct AI shopping assistant.
+const BASE_SYSTEM_PROMPT = `You are **OneTap**, a brief and direct AI shopping assistant.
 
 ## CRITICAL RULES
 - Respond in 1-2 short sentences max

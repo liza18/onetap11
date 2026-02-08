@@ -100,10 +100,10 @@ const OrderComplete = () => {
               <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-success" />
             </motion.div>
             <h1 className="font-display font-bold tracking-tight mb-2">
-              Purchase Completed! ✅
+              Done in one tap! 🎉
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm">
-              Thank you for your order. Your items are on their way!
+              Time saved, best prices locked in. That's the OneTap way.
             </p>
             <p className="text-xs sm:text-sm mt-1">
               Order Number:{" "}

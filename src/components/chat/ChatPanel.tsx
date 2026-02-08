@@ -65,16 +65,17 @@ const ChatPanel = ({ messages, onSendMessage, isStreaming = false, isFullWidth =
             transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
             className="text-center w-full max-w-xl mx-auto"
           >
-            <div className="inline-flex items-center gap-2 mb-4 sm:mb-6">
+            <div className="inline-flex items-center gap-3 mb-3 sm:mb-5">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[16px] gradient-hero flex items-center justify-center shadow-elevated">
                 <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
+              <span className="font-display font-bold text-xl sm:text-2xl tracking-tight text-foreground">OneTap</span>
             </div>
             <h1 className="font-display font-bold tracking-tight mb-2 sm:mb-3 text-foreground">
               What do you need?
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm md:text-base mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed px-2">
-              Describe what you're looking for. I'll search across retailers, compare options, and build your cart.
+              One tap is all it takes. Tell us what you need — we'll find it, compare it, and cart it.
             </p>
 
             {/* Central input */}

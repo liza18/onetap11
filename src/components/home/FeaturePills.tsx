@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, DollarSign, Zap } from "lucide-react";
+import { Search, DollarSign, Zap, ListChecks } from "lucide-react";
 
 const features = [
   {
@@ -19,6 +19,12 @@ const features = [
     title: "Fast Delivery",
     description: "Get it when you need it",
     gradient: "from-orange-500/10 to-red-500/10",
+  },
+  {
+    icon: ListChecks,
+    title: "Drop Your List",
+    description: "You plan it, we sort it all out",
+    gradient: "from-violet-500/10 to-purple-500/10",
   },
 ];
 

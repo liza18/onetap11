@@ -1,14 +1,18 @@
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, ExternalLink, Tag } from "lucide-react";
+import { X, Star, ExternalLink, Tag, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Product, RETAILER_CONFIG } from "@/types/commerce";
 import { useSettings } from "@/hooks/useSettings";
-import { RETAILER_SEARCH_URLS, CURRENCY_SYMBOLS } from "@/types/settings";
+import { CURRENCY_SYMBOLS } from "@/types/settings";
+import { supabase } from "@/integrations/supabase/client";
 
-interface VendorOffer {
+interface Alternative {
+  name: string;
   retailer: string;
   price: number;
   deliveryEstimate: string;
-  productUrl?: string;
+  productUrl: string;
+  matchScore: number;
 }
 
 interface PriceComparatorProps {
@@ -19,39 +23,59 @@ interface PriceComparatorProps {
 
 const PriceComparator = ({ product, open, onClose }: PriceComparatorProps) => {
   const { settings } = useSettings();
-  const country = settings.country;
   const currencySymbol = CURRENCY_SYMBOLS[settings.currency];
-  const searchTerm = encodeURIComponent(product.name);
 
-  // Get enabled retailers for the user's country (excluding the current product's retailer label)
-  const countryRetailerUrls = RETAILER_SEARCH_URLS[country] || {};
-  const enabledRetailerIds = new Set(
-    settings.retailers.filter((r) => r.enabled).map((r) => r.id)
-  );
-
-  // Map enabled retailer labels to their search URLs
-  const enabledLabels = settings.retailers
-    .filter((r) => r.enabled)
-    .map((r) => r.label);
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const bestPrice = product.price;
   const bestRetailer = RETAILER_CONFIG[product.retailer]?.label || "Store";
 
-  // Generate alternatives from country-specific enabled retailers
-  const alternatives: VendorOffer[] = enabledLabels
-    .filter((label) => label !== bestRetailer && label !== "Other Retailers" && label !== "Otros Retailers")
-    .slice(0, 4)
-    .map((retailerLabel) => {
-      const markup = 1 + (0.05 + Math.random() * 0.3);
-      const searchUrl = countryRetailerUrls[retailerLabel];
-      return {
-        retailer: retailerLabel,
-        price: Math.round(product.price * markup * 100) / 100,
-        deliveryEstimate: `${Math.ceil(Math.random() * 4 + 1)} days`,
-        productUrl: searchUrl ? `${searchUrl}${searchTerm}` : undefined,
-      };
-    })
-    .sort((a, b) => a.price - b.price);
+  useEffect(() => {
+    if (open && alternatives.length === 0 && !loading) {
+      fetchAlternatives();
+    }
+  }, [open]);
+
+  const fetchAlternatives = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("product-search", {
+        body: {
+          queries: [product.name],
+          userContext: `Find this exact product or very similar alternatives at different retailers. The original is from ${bestRetailer} at ${currencySymbol}${bestPrice.toFixed(2)}.`,
+          country: settings.country,
+          currency: settings.currency,
+        },
+      });
+
+      if (fnError) {
+        setError("Could not fetch alternatives. Try again later.");
+        return;
+      }
+
+      const results: Alternative[] = (data?.products || [])
+        .filter((p: any) => p.productUrl && p.price > 0)
+        .map((p: any) => ({
+          name: p.name,
+          retailer: p.retailer || "Store",
+          price: p.price,
+          deliveryEstimate: p.deliveryEstimate || "Varies",
+          productUrl: p.productUrl,
+          matchScore: p.matchScore || 0,
+        }))
+        .sort((a: Alternative, b: Alternative) => a.price - b.price);
+
+      setAlternatives(results);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -76,15 +100,15 @@ const PriceComparator = ({ product, open, onClose }: PriceComparatorProps) => {
               {/* Header */}
               <div className="bg-card/95 backdrop-blur-sm px-6 pt-5 pb-3 border-b border-border/30 shrink-0">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-display font-bold text-lg tracking-tight">
                       Price Comparison
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-0.5">{product.name}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5 truncate">{product.name}</p>
                   </div>
                   <button
                     onClick={onClose}
-                    className="p-1.5 rounded-xl hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground"
+                    className="p-1.5 rounded-xl hover:bg-secondary/60 transition-colors text-muted-foreground hover:text-foreground ml-2"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -92,11 +116,11 @@ const PriceComparator = ({ product, open, onClose }: PriceComparatorProps) => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                {/* Best Deal Card */}
+                {/* Current Product Card */}
                 <div className="relative rounded-2xl p-4 border-2 border-success/40 bg-gradient-to-br from-success/10 via-success/5 to-transparent">
                   <div className="inline-flex items-center gap-1.5 bg-success text-success-foreground px-2.5 py-1 rounded-lg text-xs font-semibold mb-3">
                     <Star className="h-3 w-3" />
-                    Best Deal
+                    Current Selection
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -112,65 +136,116 @@ const PriceComparator = ({ product, open, onClose }: PriceComparatorProps) => {
                       <p className="font-display font-bold text-2xl tracking-tight">
                         {currencySymbol}{bestPrice.toFixed(2)}
                       </p>
-                      <p className="text-xs text-success font-medium">Lowest price</p>
+                      {product.productUrl && (
+                        <a
+                          href={product.productUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          View <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Alternative Retailers */}
+                {/* Alternatives */}
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-3">
-                    Alternative Retailers ({settings.country.toUpperCase()})
+                    Real Alternatives ({settings.country.toUpperCase()})
                   </h4>
+
+                  {loading && (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Searching retailers…</p>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                      <AlertCircle className="h-6 w-6 text-destructive" />
+                      <p className="text-sm text-muted-foreground text-center">{error}</p>
+                      <button
+                        onClick={fetchAlternatives}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Retry
+                      </button>
+                    </div>
+                  )}
+
+                  {!loading && !error && alternatives.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2">
+                      <p className="text-sm text-muted-foreground">No alternatives found.</p>
+                      <button
+                        onClick={fetchAlternatives}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Search again
+                      </button>
+                    </div>
+                  )}
+
                   <div className="space-y-3">
                     {alternatives.map((alt, i) => {
                       const diff = alt.price - bestPrice;
-                      const pctMore = Math.round((diff / bestPrice) * 100);
+                      const isLower = diff < 0;
+                      const pctDiff = Math.abs(Math.round((diff / bestPrice) * 100));
 
                       return (
-                        <motion.div
-                          key={alt.retailer}
+                        <motion.a
+                          key={`${alt.retailer}-${i}`}
+                          href={alt.productUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 + i * 0.08 }}
-                          className="rounded-xl border border-border/50 bg-secondary/20 p-4"
+                          className="block rounded-xl border border-border/50 bg-secondary/20 p-4 hover:bg-secondary/40 transition-colors"
                         >
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="font-semibold text-sm">{alt.retailer}</p>
-                              <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0 mr-3">
+                              <p className="font-semibold text-sm truncate">{alt.name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 capitalize">{alt.retailer}</p>
+                              <div className="flex items-center gap-1.5 mt-1">
                                 <Tag className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-xs text-muted-foreground">
                                   {alt.deliveryEstimate}
                                 </span>
                               </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                               <p className="font-display font-bold text-lg tracking-tight">
                                 {currencySymbol}{alt.price.toFixed(2)}
                               </p>
-                              <p className="text-xs text-destructive font-medium">
-                                +{currencySymbol}{diff.toFixed(2)}
-                              </p>
+                              {diff !== 0 && (
+                                <p className={`text-xs font-medium ${isLower ? "text-success" : "text-destructive"}`}>
+                                  {isLower ? "−" : "+"}{currencySymbol}{Math.abs(diff).toFixed(2)}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-medium text-destructive/80 bg-destructive/10 px-2 py-0.5 rounded-md">
-                              {pctMore}% more expensive
-                            </span>
-                            {alt.productUrl && (
-                              <a
-                                href={alt.productUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                              >
-                                Search on {alt.retailer}
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
+                            {diff !== 0 ? (
+                              <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
+                                isLower
+                                  ? "text-success bg-success/10"
+                                  : "text-destructive/80 bg-destructive/10"
+                              }`}>
+                                {isLower ? `${pctDiff}% cheaper` : `${pctDiff}% more expensive`}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
+                                Same price
+                              </span>
                             )}
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              View product <ExternalLink className="h-3 w-3" />
+                            </span>
                           </div>
-                        </motion.div>
+                        </motion.a>
                       );
                     })}
                   </div>

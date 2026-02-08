@@ -8,13 +8,13 @@ interface ComparisonChartProps {
 
 const ComparisonChart = ({ products, highlightId }: ComparisonChartProps) => {
   const priceData = products.map((p) => ({
-    name: p.name.length > 20 ? p.name.slice(0, 18) + "…" : p.name,
+    name: p.name.length > 15 ? p.name.slice(0, 13) + "…" : p.name,
     price: p.price,
     id: p.id,
   }));
 
   const scoreData = products.map((p) => ({
-    name: p.name.length > 20 ? p.name.slice(0, 18) + "…" : p.name,
+    name: p.name.length > 15 ? p.name.slice(0, 13) + "…" : p.name,
     score: p.matchScore,
     id: p.id,
   }));
@@ -36,16 +36,16 @@ const ComparisonChart = ({ products, highlightId }: ComparisonChartProps) => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Price Comparison</p>
-        <ResponsiveContainer width="100%" height={140}>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 sm:mb-3">Price Comparison</p>
+        <ResponsiveContainer width="100%" height={Math.max(100, products.length * 28 + 20)}>
           <BarChart data={priceData} layout="vertical" margin={{ left: 0, right: 12, top: 0, bottom: 0 }}>
             <XAxis type="number" hide />
             <YAxis
               type="category"
               dataKey="name"
-              width={100}
+              width={80}
               tick={{ fontSize: 10, fill: "hsl(230, 8%, 46%)" }}
               axisLine={false}
               tickLine={false}
@@ -55,7 +55,7 @@ const ComparisonChart = ({ products, highlightId }: ComparisonChartProps) => {
               formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
               cursor={{ fill: "hsl(230, 12%, 95%)" }}
             />
-            <Bar dataKey="price" radius={[0, 6, 6, 0]} barSize={16}>
+            <Bar dataKey="price" radius={[0, 6, 6, 0]} barSize={14}>
               {priceData.map((entry) => (
                 <Cell
                   key={entry.id}
@@ -68,14 +68,14 @@ const ComparisonChart = ({ products, highlightId }: ComparisonChartProps) => {
       </div>
 
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Match Score</p>
-        <ResponsiveContainer width="100%" height={140}>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 sm:mb-3">Match Score</p>
+        <ResponsiveContainer width="100%" height={Math.max(100, products.length * 28 + 20)}>
           <BarChart data={scoreData} layout="vertical" margin={{ left: 0, right: 12, top: 0, bottom: 0 }}>
             <XAxis type="number" domain={[0, 100]} hide />
             <YAxis
               type="category"
               dataKey="name"
-              width={100}
+              width={80}
               tick={{ fontSize: 10, fill: "hsl(230, 8%, 46%)" }}
               axisLine={false}
               tickLine={false}
@@ -85,7 +85,7 @@ const ComparisonChart = ({ products, highlightId }: ComparisonChartProps) => {
               formatter={(value: number) => [`${value}%`, "Score"]}
               cursor={{ fill: "hsl(230, 12%, 95%)" }}
             />
-            <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={16}>
+            <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={14}>
               {scoreData.map((entry) => (
                 <Cell
                   key={entry.id}
@@ -98,9 +98,9 @@ const ComparisonChart = ({ products, highlightId }: ComparisonChartProps) => {
       </div>
 
       <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Overall Assessment</p>
-        <ResponsiveContainer width="100%" height={180}>
-          <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 sm:mb-3">Overall Assessment</p>
+        <ResponsiveContainer width="100%" height={160}>
+          <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
             <PolarGrid stroke="hsl(230, 12%, 91%)" />
             <PolarAngleAxis
               dataKey="metric"

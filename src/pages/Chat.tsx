@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Filter } from "lucide-react";
 import ChatPanel from "@/components/chat/ChatPanel";
 import ProductPanel from "@/components/products/ProductPanel";
 import ProductDetailModal from "@/components/products/ProductDetailModal";
@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/useSettings";
 import { useNavigate } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface ConversationRecord {
   id: string;
@@ -48,6 +49,8 @@ const Chat = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [localSearchHistory, setLocalSearchHistory] = useState<string[]>([]);
+  const [showMobileProducts, setShowMobileProducts] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const hasProducts = products.length > 0;
@@ -262,37 +265,76 @@ const Chat = () => {
     (query: string) => {
       if (!isStreaming) {
         handleSendMessage(query);
+        setSidebarOpen(false);
       }
     },
     [isStreaming, handleSendMessage]
   );
 
+  const sidebarContent = (
+    <SearchSidebar
+      searchHistory={localSearchHistory}
+      suggestedQueries={SUGGESTED_QUERIES}
+      isSearching={isExtracting}
+      activeCategory={activeCategory}
+      onCategoryChange={setActiveCategory}
+      availableCategories={availableCategories}
+      productCount={products.length}
+      sortBy={sortBy}
+      onSortChange={setSortBy}
+      onQuerySelect={handleQueryFromSidebar}
+      cacheHitRate={0}
+      recentCacheQueries={recentCacheQueries}
+    />
+  );
+
   return (
-    <div className="h-screen flex flex-col bg-background relative overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-background relative overflow-hidden">
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/[0.04] blur-[120px]" />
-        <div className="absolute bottom-0 -left-20 w-[400px] h-[400px] rounded-full bg-accent/[0.03] blur-[120px]" />
+        <div className="absolute -top-[10vw] -right-[10vw] w-[min(500px,60vw)] h-[min(500px,60vw)] rounded-full bg-primary/[0.04] blur-[120px]" />
+        <div className="absolute bottom-0 -left-[5vw] w-[min(400px,50vw)] h-[min(400px,50vw)] rounded-full bg-accent/[0.03] blur-[120px]" />
       </div>
 
+      {/* Mobile tab bar for switching chat/products */}
+      {isMobile && hasProducts && (
+        <div className="flex items-center border-b border-border/30 bg-card/80 backdrop-blur-sm shrink-0 z-20 safe-top">
+          <button
+            onClick={() => setShowMobileProducts(false)}
+            className={`flex-1 py-3 text-xs font-semibold text-center transition-colors ${
+              !showMobileProducts ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+            }`}
+          >
+            Chat
+          </button>
+          <button
+            onClick={() => setShowMobileProducts(true)}
+            className={`flex-1 py-3 text-xs font-semibold text-center transition-colors ${
+              showMobileProducts ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+            }`}
+          >
+            Products ({products.length})
+          </button>
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <button className="px-4 py-3 text-muted-foreground">
+                <Filter className="h-4 w-4" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[85vw] max-w-[320px] p-0">
+              {sidebarContent}
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
+
       {/* Main content */}
-      <div className={`flex-1 flex ${isMobile ? "flex-col" : "flex-row"} overflow-hidden relative z-10`}>
-        {/* Persistent sidebar — always visible on desktop when products exist */}
+      <div className="flex-1 flex flex-row overflow-hidden relative z-10">
+        {/* Persistent sidebar — desktop only when products exist */}
         {!isMobile && hasProducts && (
-          <SearchSidebar
-            searchHistory={localSearchHistory}
-            suggestedQueries={SUGGESTED_QUERIES}
-            isSearching={isExtracting}
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            availableCategories={availableCategories}
-            productCount={products.length}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            onQuerySelect={handleQueryFromSidebar}
-            cacheHitRate={0}
-            recentCacheQueries={recentCacheQueries}
-          />
+          <div className="w-[clamp(220px,18vw,280px)] shrink-0">
+            {sidebarContent}
+          </div>
         )}
 
         {/* Chat panel */}
@@ -300,8 +342,8 @@ const Chat = () => {
           className={`flex flex-col transition-all duration-500 ease-out ${
             hasProducts
               ? isMobile
-                ? "h-1/2 border-b border-border/30"
-                : "w-[400px] min-w-[340px] border-r border-border/30"
+                ? showMobileProducts ? "hidden" : "flex-1"
+                : "w-[clamp(300px,28vw,420px)] shrink-0 border-r border-border/30"
               : "flex-1"
           }`}
         >
@@ -310,7 +352,7 @@ const Chat = () => {
 
         {/* Product panel */}
         {hasProducts && (
-          <div className="flex-1 overflow-hidden">
+          <div className={`flex-1 overflow-hidden ${isMobile ? (showMobileProducts ? "flex flex-col" : "hidden") : ""}`}>
             <ProductPanel
               products={products}
               sortBy={sortBy}
@@ -330,7 +372,7 @@ const Chat = () => {
       {cartItems.length > 0 && (
         <button
           onClick={handleGoToCart}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-primary text-primary-foreground px-5 py-3.5 rounded-2xl shadow-elevated hover:bg-primary/90 transition-all font-semibold text-sm"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,1.5rem))] right-4 sm:right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 sm:px-5 py-3 rounded-2xl shadow-elevated hover:bg-primary/90 transition-all font-semibold text-sm"
         >
           <ShoppingCart className="h-5 w-5" />
           <span>Cart ({cartItems.length})</span>

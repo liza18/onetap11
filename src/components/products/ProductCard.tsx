@@ -35,7 +35,6 @@ const ProductCard = ({ product, inCart, onAddToCart, thumbnailUrl, onSelect }: P
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest("a")) return;
     
-    // Open product URL directly if available
     if (product.productUrl) {
       window.open(product.productUrl, "_blank", "noopener,noreferrer");
     } else {
@@ -48,8 +47,8 @@ const ProductCard = ({ product, inCart, onAddToCart, thumbnailUrl, onSelect }: P
       className="bg-card rounded-2xl overflow-hidden group hover:shadow-elevated transition-all duration-300 cursor-pointer border border-border/50 shadow-card"
       onClick={handleCardClick}
     >
-      {/* Image */}
-      <div className="h-36 bg-secondary/30 flex items-center justify-center relative overflow-hidden">
+      {/* Image — aspect ratio based for responsiveness */}
+      <div className="aspect-[16/10] bg-secondary/30 flex items-center justify-center relative overflow-hidden">
         {showImage ? (
           <>
             {!imgLoaded && <Skeleton className="absolute inset-0 rounded-none" />}
@@ -69,22 +68,22 @@ const ProductCard = ({ product, inCart, onAddToCart, thumbnailUrl, onSelect }: P
         )}
 
         <div
-          className="absolute top-3 right-3 px-2.5 py-1 rounded-xl text-[10px] font-semibold text-white tracking-wide z-10"
+          className="absolute top-2 sm:top-3 right-2 sm:right-3 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl text-[9px] sm:text-[10px] font-semibold text-white tracking-wide z-10"
           style={{ backgroundColor: retailer.color }}
         >
           {retailer.label}
         </div>
-        <div className="absolute top-3 left-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm rounded-xl px-2.5 py-1 z-10 border border-border/30">
+        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm rounded-xl px-2 py-0.5 sm:px-2.5 sm:py-1 z-10 border border-border/30">
           <Star className={`h-3 w-3 ${scoreColor}`} />
-          <span className={`text-[11px] font-semibold ${scoreColor}`}>{product.matchScore}%</span>
+          <span className={`text-[10px] sm:text-[11px] font-semibold ${scoreColor}`}>{product.matchScore}%</span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
         <div>
-          <h3 className="font-display font-semibold text-sm leading-snug tracking-tight">{product.name}</h3>
-          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed line-clamp-2">{product.description}</p>
+          <h3 className="font-display font-semibold text-xs sm:text-sm leading-snug tracking-tight line-clamp-2">{product.name}</h3>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 sm:mt-1.5 leading-relaxed line-clamp-2">{product.description}</p>
         </div>
 
         <div className="space-y-1.5">
@@ -109,10 +108,10 @@ const ProductCard = ({ product, inCart, onAddToCart, thumbnailUrl, onSelect }: P
 
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-display font-bold text-lg tracking-tight">{currencySymbol}{product.price.toFixed(2)}</span>
-            <span className="text-[10px] text-success font-medium ml-1.5">Cheapest</span>
+            <span className="font-display font-bold text-base sm:text-lg tracking-tight">{currencySymbol}{product.price.toFixed(2)}</span>
+            <span className="text-[9px] sm:text-[10px] text-success font-medium ml-1.5">Cheapest</span>
           </div>
-          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground">
             <Truck className="h-3 w-3" />
             {product.deliveryEstimate}
           </span>
@@ -123,22 +122,22 @@ const ProductCard = ({ product, inCart, onAddToCart, thumbnailUrl, onSelect }: P
             size="sm"
             onClick={(e) => { e.stopPropagation(); onAddToCart(); }}
             variant={inCart ? "secondary" : "default"}
-            className="flex-1 text-xs h-9 rounded-xl font-medium"
+            className="flex-1 text-[11px] sm:text-xs h-8 sm:h-9 rounded-xl font-medium"
           >
             {inCart ? (
-              <><Check className="h-3.5 w-3.5 mr-1.5" />Added</>
+              <><Check className="h-3.5 w-3.5 mr-1" />Added</>
             ) : (
-              <><ShoppingCart className="h-3.5 w-3.5 mr-1.5" />Add to Cart</>
+              <><ShoppingCart className="h-3.5 w-3.5 mr-1" />Add to Cart</>
             )}
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            className="text-xs h-9 rounded-xl gap-1 text-muted-foreground hover:text-foreground"
+            className="text-[11px] sm:text-xs h-8 sm:h-9 rounded-xl gap-1 text-muted-foreground hover:text-foreground"
             onClick={(e) => { e.stopPropagation(); setShowComparator(true); }}
           >
             <BarChart3 className="h-3.5 w-3.5" />
-            Compare
+            <span className="hidden sm:inline">Compare</span>
           </Button>
         </div>
       </div>

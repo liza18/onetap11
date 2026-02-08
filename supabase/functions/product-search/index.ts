@@ -17,7 +17,7 @@ const CURRENCY_MAP: Record<string, string> = {
 };
 
 const EXTRACT_SYSTEM_PROMPT = `Extract products from search results. For each: name, description, price, retailer, category, delivery estimate, match score (0-100), rank reason, URL.
-Rules: Only real products with price. Use actual URLs. Categories: snacks/badges/tech/decorations/prizes/stationery/equipment/technology/food/home/entertainment/tools/other. Retailers: amazon/walmart/target/bestbuy/ebay/mercadolibre/other.`;
+Rules: Only real products with price. CRITICAL: productUrl MUST be a direct link to the product page (containing /dp/, /ip/, /p/, or product ID in URL), NOT a search results page or category page. If the content includes product links, extract those. Categories: snacks/badges/tech/decorations/prizes/stationery/equipment/technology/food/home/entertainment/tools/other. Retailers: amazon/walmart/target/bestbuy/ebay/mercadolibre/other.`;
 
 const extractProductsTool = {
   type: "function" as const,
@@ -40,7 +40,7 @@ const extractProductsTool = {
               deliveryEstimate: { type: "string", description: "Estimated delivery time" },
               matchScore: { type: "number", description: "How well this matches user needs, 0-100" },
               rankReason: { type: "string", description: "Why this product is recommended" },
-              productUrl: { type: "string", description: "URL to the product page" },
+              productUrl: { type: "string", description: "Direct URL to the specific product page (must contain product ID like /dp/ASIN, /ip/ID, /p/SKU). Do NOT use search result pages or category pages." },
             },
             required: ["name", "description", "price", "retailer", "category", "deliveryEstimate", "matchScore", "rankReason", "productUrl"],
             additionalProperties: false,
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
             { role: "system", content: EXTRACT_SYSTEM_PROMPT },
             {
               role: "user",
-              content: `User is shopping from: ${countryStores}\nCurrency: ${userCurrency}\nUser context: ${userContext || "Shopping"}\n\n${searchContext}\n\nExtract all real products with their actual URLs, prices in ${userCurrency}, and details. Prefer products from ${countryStores}. Only include products you can verify from the search results.`,
+              content: `User is shopping from: ${countryStores}\nCurrency: ${userCurrency}\nUser context: ${userContext || "Shopping"}\n\n${searchContext}\n\nExtract all real products with their DIRECT product page URLs (containing product IDs like /dp/, /ip/, /p/), prices in ${userCurrency}, and details. Prefer products from ${countryStores}. Only include products you can verify from the search results. IMPORTANT: URLs must go directly to the product page, not search results or category pages.`,
             },
           ],
           tools: [extractProductsTool],

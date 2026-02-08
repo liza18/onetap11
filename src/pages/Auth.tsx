@@ -118,8 +118,8 @@ const Auth = () => {
           <div className="w-14 h-14 rounded-[18px] gradient-hero flex items-center justify-center mx-auto mb-4 shadow-elevated">
             <Sparkles className="h-7 w-7 text-white" />
           </div>
-          <h1 className="font-display font-bold text-2xl tracking-tight">AgentCart</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">Your AI shopping agent</p>
+          <h1 className="font-display font-bold text-2xl tracking-tight">OneTap</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">One tap, best deal.</p>
         </div>
 
         {/* Auth card */}
